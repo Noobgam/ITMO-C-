@@ -311,11 +311,11 @@ big_integer operator / (big_integer a, const big_integer &b) {
 big_integer operator % (big_integer a, const big_integer &b) {
     if (a < 0)
         if (b < 0)
-            return (-a) / (-b);
+            return -(-a) % (-b);
         else
-            return -((-a) / b);
+            return -((-a) % b);
     else if (b < 0)
-        return -(a / (-b));
+        return (a % (-b));
     return a.divMod(b).second;
 }
 
