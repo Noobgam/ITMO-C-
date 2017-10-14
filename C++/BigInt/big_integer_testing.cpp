@@ -648,7 +648,6 @@ namespace
         T b = extract_random_element(v);
 
         T ab = a * b;
-	std::cout << a << " " << b << " : " << ab << std::endl;
         ASSERT_TRUE(ab / a == b);
         ASSERT_TRUE(ab / b == a);
 

@@ -9,6 +9,7 @@ public:
     big_integer();
     big_integer(const big_integer &b);
     big_integer(int b);
+    big_integer(uint32_t b);
     explicit big_integer(std::string const &s);
 
     ~big_integer();

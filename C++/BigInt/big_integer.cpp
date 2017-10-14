@@ -26,12 +26,15 @@ big_integer::big_integer() :
 }
 
 big_integer::big_integer(const big_integer &b) :
-    size(b.size), data(new uint32_t[b.size]) {
+    size(b.size), 
+    data(new uint32_t[b.size]) 
+{
     std::copy(b.data, b.data + size, data);
 }
 
 big_integer::big_integer(const std::string &s) :
-    big_integer(0) {
+    big_integer(0) 
+{
     bool neg = s[0] == '-';
     for (size_t i = neg; i < s.size(); ++i) {
         *this *= 10;
@@ -42,8 +45,23 @@ big_integer::big_integer(const std::string &s) :
 }
 
 big_integer::big_integer(int b) :
-    size(1), data(new uint32_t[1]) {
+    size(1),
+    data(new uint32_t[1]) 
+{
     data[0] = b;
+}
+
+big_integer::big_integer(uint32_t b) {
+    if (b < (uint32_t)1 << 31) {
+        size = 1;
+        data = new uint32_t[1];
+        data[0] = b;
+    } else {
+        size = 2;
+        data = new uint32_t[2];
+        data[0] = b;
+        data[1] = 0;
+    }
 }
 
 big_integer::~big_integer() {
@@ -265,11 +283,11 @@ big_integer operator * (const big_integer &a, const big_integer &b) {
 
 std::pair <big_integer, big_integer> big_integer::divMod(const big_integer &b) {
     if (*this < b)
-        return {0, *this};
+        return { 0, *this };
     if (b.data[b.size - 1] != 0) {
         int shift = 31 - maxbit(b.data[b.size - 1]);
         auto qr = (*this << shift).divMod(b << shift);
-        return {qr.first, qr.second >> shift};
+        return { qr.first, qr.second >> shift };
     }
     //make b proper
     size_t m = size - (data[size - 1] == 0);
@@ -282,6 +300,8 @@ std::pair <big_integer, big_integer> big_integer::divMod(const big_integer &b) {
         *this -= (b << (m * 32));
     }
     for (size_t j = m; j--; ) {
+        if (n + j >= size)
+            continue;
         uint64_t temp = ((static_cast<uint64_t>(data[n + j]) << 32) + data[n + j - 1]) / b.data[n - 1];
         if (temp >> 32) {
             q.data[j] = BASE;
@@ -294,7 +314,9 @@ std::pair <big_integer, big_integer> big_integer::divMod(const big_integer &b) {
             *this += (b << (j * 32));
         }
     }
-    return {q, *this};
+    q.normalize();
+    normalize();
+    return { q, *this };
 }
 
 big_integer operator / (big_integer a, const big_integer &b) {
@@ -395,15 +417,9 @@ std::string to_string(big_integer a) {
         a = -a;
     }
     while (a != 0) {
-        int digit = 0;
-        static const int shift[10] = { 0, 6, 2, 8, 4, 0, 6, 2, 8, 4 }; //precalced shift[i] = i * BASE % 10
-        for (size_t i = a.size; i--; ) {
-            digit = shift[digit] + static_cast<int>(a.data[i] % 10);
-            if (digit >= 10)
-                digit -= 10;
-        }
-        s += '0' + digit;
-        a /= 10;
+        auto lr = a.divMod(10);
+        s.push_back('0' + static_cast<int>(lr.second.data[0]));
+        a = lr.first;
     }
     if (neg)
         s.push_back('-');
