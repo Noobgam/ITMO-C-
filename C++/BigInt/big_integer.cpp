@@ -26,14 +26,14 @@ big_integer::big_integer() :
 }
 
 big_integer::big_integer(const big_integer &b) :
-    size(b.size), 
-    data(new uint32_t[b.size]) 
+    size(b.size),
+    data(new uint32_t[b.size])
 {
     std::copy(b.data, b.data + size, data);
 }
 
 big_integer::big_integer(const std::string &s) :
-    big_integer(0) 
+    big_integer(0)
 {
     bool neg = s[0] == '-';
     for (size_t i = neg; i < s.size(); ++i) {
@@ -46,7 +46,7 @@ big_integer::big_integer(const std::string &s) :
 
 big_integer::big_integer(int b) :
     size(1),
-    data(new uint32_t[1]) 
+    data(new uint32_t[1])
 {
     data[0] = b;
 }
@@ -56,7 +56,8 @@ big_integer::big_integer(uint32_t b) {
         size = 1;
         data = new uint32_t[1];
         data[0] = b;
-    } else {
+    }
+    else {
         size = 2;
         data = new uint32_t[2];
         data[0] = b;
@@ -260,7 +261,8 @@ big_integer operator * (const big_integer &a, const big_integer &b) {
             return (-a) * (-b);
         else
             return -((-a) * b);
-    } else if (b < 0)
+    }
+    else if (b < 0)
         return -(a * (-b));
     big_integer r;
     r.resize(a.size + b.size);
@@ -283,11 +285,21 @@ big_integer operator * (const big_integer &a, const big_integer &b) {
 
 std::pair <big_integer, big_integer> big_integer::divMod(const big_integer &b) {
     if (*this < b)
-        return { 0, *this };
+        return{ 0, *this };
+    if (b.size == 1 || b.size == 2 && b.data[1] == 0) {
+        uint32_t carry = 0;
+        for (uint32_t i = size; i--; ) {
+            uint64_t cur = data[i] + carry * (1LL << 32);
+            data[i] = (uint32_t)(cur / b.data[0]);
+            carry = (uint32_t)(cur % b.data[0]);
+        }
+        normalize();
+        return{ *this, carry };
+    }
     if (b.data[b.size - 1] != 0) {
         int shift = 31 - maxbit(b.data[b.size - 1]);
         auto qr = (*this << shift).divMod(b << shift);
-        return { qr.first, qr.second >> shift };
+        return{ qr.first, qr.second >> shift };
     }
     //make b proper
     size_t m = size - (data[size - 1] == 0);
@@ -305,7 +317,8 @@ std::pair <big_integer, big_integer> big_integer::divMod(const big_integer &b) {
         uint64_t temp = ((static_cast<uint64_t>(data[n + j]) << 32) + data[n + j - 1]) / b.data[n - 1];
         if (temp >> 32) {
             q.data[j] = BASE;
-        } else {
+        }
+        else {
             q.data[j] = static_cast<uint32_t>(temp);
         }
         *this -= q.data[j] * (b << (j * 32));
@@ -316,7 +329,7 @@ std::pair <big_integer, big_integer> big_integer::divMod(const big_integer &b) {
     }
     q.normalize();
     normalize();
-    return { q, *this };
+    return{ q, *this };
 }
 
 big_integer operator / (big_integer a, const big_integer &b) {
@@ -454,7 +467,8 @@ void big_integer::normalize() {
         if (data[i] != fill || i == 0) {
             if (filler(data[i]) != fill) { //this shouldn't usually happen tho..., happens only if last block was eq to fill and last but one has wrong last bit
                 resize(i + 2);
-            } else {
+            }
+            else {
                 resize(i + 1);
             }
             return;
