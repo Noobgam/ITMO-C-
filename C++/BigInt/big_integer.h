@@ -62,7 +62,6 @@ public:
 private:
     size_t size;
     uint32_t *data;
-    big_integer(uint32_t *tempdata, size_t sz) : size(sz), data(tempdata) {};
     void resize(size_t nsize);
     void normalize();
     std::pair <big_integer, big_integer> divMod(const big_integer &b);
